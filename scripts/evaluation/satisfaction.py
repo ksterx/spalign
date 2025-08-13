@@ -180,7 +180,7 @@ def main() -> None:
     config = EvaluationConfig(
         schema=ConversationSatisfactionEvaluation,
         prompt_template=SATISFACTION_PROMPT_TEMPLATE,
-        output_dir="evaluation/satisfaction/jsons",
+        output_dir="evaluation/satisfaction",
         table_suffix="_satisfaction",
     )
 

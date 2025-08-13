@@ -444,7 +444,7 @@ def main() -> None:
         config = EvaluationConfig(
             schema=ConversationEvaluation,
             prompt_template=QUALITY_PROMPT_TEMPLATE,
-            output_dir="evaluation/illogical/jsons",
+            output_dir="evaluation/illogical",
             table_suffix="_quality",
         )
 

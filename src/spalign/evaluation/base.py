@@ -168,7 +168,7 @@ class BaseEvaluator(Generic[T], ABC):
         self.config = config
         self.run_name = run_name
         self.log_dir = Path(f"{os.environ['RESULTS_DIR']}/{run_name}")
-        self.output_dir = self.log_dir / config.output_dir
+        self.output_dir = self.log_dir / config.output_dir / "jsons"
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         self.progress_tracker = ProgressTracker(
