@@ -63,34 +63,35 @@ class ConversationEvaluation(BaseModel):
 
 
 QUALITY_PROMPT_TEMPLATE = """\
-### Instructions
-- Below is a conversation between a user and in-app AI characters.
-- Evaluate the conversation quality based on LLM performance issues.
-- Identify character utterances with the following quality problems:
-  1. Unnatural repetition of similar content
-  2. Inconsistency with character's past context or personality
-    - 会話に登場している他のキャラクターを忘れる。
-    - 一人称を間違える、またはキャラクターに合わない不適切な口調（例：「みなさまにおかれましては」のような過度に丁寧な表現）を使う。
-    - 直前の文脈を理解できていない応答（例：「あなたの話をしていたのよ」→「え、何の話？」）。
-    - 発言や状況の矛盾（例：お店で寝てしまう）。
-    - 会話の中で不自然に時間が進んでしまう。
-  3. Grammatically unnatural or awkward expressions
-  4. Lack of specificity or vague responses
-- Propose improved replacements that maintain character consistency and improve conversation flow.
+### 指示
+- 以下は、ユーザーとアプリ内のAIキャラクターとの会話です。
+- LLMのパフォーマンス問題に基づき、会話の品質を評価してください。
+- 以下の品質問題を特定し、キャラクターの発言を評価してください：
+  1. 不自然な内容の繰り返し（例：「星影」「紅蓮華」のような特定の単語の繰り返し）。
+  2. これまでの文脈やキャラクター設定との矛盾。
+     - 会話に登場している他のキャラクターを忘れる。
+     - 一人称を間違える、またはキャラクターに合わない不適切な口調（例：「みなさまにおかれましては」のような過度に丁寧な表現）を使う。
+     - 直前の文脈を理解できていない応答（例：「あなたの話をしていたのよ」→「え、何の話？」）。
+     - 発言や状況の矛盾（例：お店で寝てしまう）。
+     - 会話の中で不自然に時間が進んでしまう。
+  3. 文法的に不自然、またはぎこちない表現。
+  4. 具体性に欠ける、または曖昧な応答。
+  5. 会話が停滞する、または新しい話題が出ても前の話に引き戻してしまうような応答（浅瀬チャプチャプ問題）。
+- キャラクター設定を維持し、会話の流れを改善するような修正案を提案してください。
 
-### Output Format
+### 出力フォーマット
 {format_instructions}
 
-### Notes
-- **Focus on conversation quality, not user satisfaction.**
-- **Identify specific issues: repetition, inconsistency, unnatural grammar, lack of specificity.**
-- **If suggesting corrections, ensure the revised line improves conversation quality while staying true to the character.**
-- **Consider the entire conversation context when evaluating consistency.**
+### 注意事項
+- **ユーザーの満足度ではなく、会話の品質に焦点を当ててください。**
+- **具体的な問題（繰り返し、矛盾、不自然な文法、具体性の欠如など）を特定してください。**
+- **修正を提案する場合、修正案がキャラクター性を維持しつつ、会話の品質を向上させるものであることを確認してください。**
+- **矛盾を評価する際は、会話全体の文脈を考慮してください。**
 
-### Character Profile
+### キャラクター設定
 {role_instruction}
 
-### Conversation Log
+### 会話ログ
 {messages}
 """
 
