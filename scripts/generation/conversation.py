@@ -45,7 +45,7 @@ def parse_arguments() -> argparse.Namespace:
         "-p",
         "--persona_type",
         type=str,
-        choices=["original", "normal", "dataset"],
+        choices=["original", "normal", "dataset", "metadata"],
         default="original",
         help="Which persona set to sample from",
     )

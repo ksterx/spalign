@@ -99,7 +99,7 @@ class ConversationGenerator:
             elif persona_type == "normal":
                 p_name = random.choice(list(NORMAL_PERSONAS.keys()))
                 info = NORMAL_PERSONAS[p_name]
-            else:  # dataset mode (randomized)
+            elif persona_type == "dataset":  # dataset mode (randomized)
                 ds_row = random.choice(
                     load_dataset(
                         "Spiral-AI/Synthesized-Persona-20250103", split="train"
@@ -109,6 +109,17 @@ class ConversationGenerator:
                 base = random.uniform(0.01, 0.12)
                 info = {
                     "profile": ds_row["new_persona"],
+                    "base_prob": base,
+                    "max_prob": random.uniform(base, 0.3),
+                    "decay": random.uniform(0.2, 0.6),
+                    "recovery_step": random.uniform(0.01, 0.05),
+                }
+            elif persona_type == "metadata":
+                persona = data["metadata"]["users"][0]
+                p_name = persona["name"]
+                base = random.uniform(0.01, 0.12)
+                info = {
+                    "profile": persona["profile"],
                     "base_prob": base,
                     "max_prob": random.uniform(base, 0.3),
                     "decay": random.uniform(0.2, 0.6),
