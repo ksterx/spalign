@@ -7,12 +7,11 @@
 #SBATCH --error=slurm/%x_%j.log
 
 cd /home/k_ishikawa/workspace/spalign/scripts/generation
-source /home/k_ishikawa/miniconda3/bin/activate
+
 deactivate
 conda deactivate
-conda activate vllm
 
-python conversation.py 250813-orpo \
+uv run conversation.py 250813-orpo \
     -m /nas/c_arata/axolotl-output/models/24B-HR-ORPO-20250811 \
     -p dataset \
     --scenario Spiral-AI/Synthesized-Scenario-20250812 \
