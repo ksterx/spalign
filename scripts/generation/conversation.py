@@ -131,7 +131,8 @@ async def main():
 
     # Load dataset
     dataset = load_dataset(args.scenario, args.scenario_subset, split="train").filter(
-        lambda x: set(CHARACTERS.keys()) == set(x["character_list"])
+        lambda x: set(CHARACTERS.keys()) & set(x["character_list"])
+        == set(x["character_list"])
     )  # 使われていないキャラクターがあるので、ここでフィルタリング
 
     if args.retry_failed:
