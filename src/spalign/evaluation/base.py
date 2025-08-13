@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Generic, TypeVar
 
-from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import AzureChatOpenAI
@@ -168,7 +167,7 @@ class BaseEvaluator(Generic[T], ABC):
     def __init__(self, config: EvaluationConfig[T], run_name: str):
         self.config = config
         self.run_name = run_name
-        self.log_dir = Path(f"/nas/k_ishikawa/datasets/HappyRat/synthesis/{run_name}")
+        self.log_dir = Path(f"{os.environ['RESULTS_DIR']}/{run_name}")
         self.output_dir = self.log_dir / config.output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -228,13 +227,14 @@ class BaseEvaluator(Generic[T], ABC):
 
         for character in characters:
             try:
-                result = chain.invoke(
-                    {
-                        "messages": messages_str,
-                        "role": character,
-                        "role_instruction": self.get_character_profile(character),
-                    }
-                )
+                data = {
+                    "messages": messages_str,
+                    "role": character,
+                    "role_instruction": self.get_character_profile(character),
+                    "scene_instruction": self.get_scene_instruction(entry),
+                }
+                logger.info(f"PROMPT: [{session_id}] {data}")
+                result = chain.invoke(data)
 
                 response = result["parsed"]
                 usage = result["raw"].usage_metadata or {}
@@ -270,6 +270,11 @@ class BaseEvaluator(Generic[T], ABC):
         pass
 
     @abstractmethod
+    def get_scene_instruction(self, entry: dict[str, Any]) -> str:
+        """Get scene instruction for evaluation."""
+        pass
+
+    @abstractmethod
     def save_corrections(
         self, corrections: list[dict[str, Any]], entry: dict[str, Any], session_id: str
     ) -> None:
@@ -287,11 +292,7 @@ class BaseEvaluator(Generic[T], ABC):
         logger.info(f"Logging to {self.output_dir}")
 
         # Setup parser and prompt
-        parser = PydanticOutputParser(pydantic_object=self.config.schema)
-        prompt_tpl = ChatPromptTemplate.from_template(
-            self.config.prompt_template,
-            partial_variables={"format_instructions": parser.get_format_instructions()},
-        )
+        prompt_tpl = ChatPromptTemplate.from_template(self.config.prompt_template)
 
         # Thread-safe aggregation variables
         agg_lock = threading.Lock()

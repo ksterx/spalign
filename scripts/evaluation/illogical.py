@@ -65,44 +65,69 @@ class ConversationEvaluation(BaseModel):
 
 QUALITY_PROMPT_TEMPLATE = """\
 ### Instructions
-- Below is a conversation between a user and in-app AI characters.
-- Evaluate the conversation quality based on LLM performance issues.
-- Identify character utterances with the following quality problems:
-  1. Unnatural repetition of similar content
-    - The character repeats the same phrases or ideas in a way that feels robotic and adds no new information to the conversation.
-    - 
-  2. Inconsistency with character's past context or personality
-    Examples:
-        - 
-        -
-    - 会話に登場している他のキャラクターを忘れる。
-    - 一人称を間違える、またはキャラクターに合わない不適切な口調（例：「みなさまにおかれましては」のような過度に丁寧な表現）を使う。
-    - 直前の文脈を理解できていない応答（例：「あなたの話をしていたのよ」→「え、何の話？」）。
-    - 発言や状況の矛盾（例：お店で寝てしまう）。
-    - 会話の中で不自然に時間が進んでしまう。
-  3. Grammatically unnatural or awkward expressions
-  4. Lack of specificity or vague responses
-- Propose improved replacements that maintain character consistency and improve conversation flow.
-
-### Output Format
-{format_instructions}
-
-### Notes
-- **Focus on conversation quality, not user satisfaction.**
-- **Identify specific issues: repetition, inconsistency, unnatural grammar, lack of specificity.**
-- **If suggesting corrections, ensure the revised line improves conversation quality while staying true to the character.**
-- **Consider the entire conversation context when evaluating consistency.**
+You are an expert conversation quality evaluator. Based on the provided "Character Profile," "Scene Setting," and "Conversation Log," your task is to analyze the AI character's utterances. Strictly adhere to the "Conversation Quality Evaluation Criteria" below to identify issues stemming from the LLM's performance and propose concrete improvements to enhance the conversation quality.
 
 ### Character Profile
 {role_instruction}
 
+### Scene Setting
+{scene_instruction}
+
 ### Conversation Log
 {messages}
+
+---
+
+### Conversation Quality Evaluation Criteria
+
+#### 1. Adherence to Character Profile
+- **Top Priority:** This is the foundation for all other evaluations.
+- **Issue:** Does the character's utterance align with the personality, speaking style, background, and first-person pronouns defined in the "Character Profile"?
+- **Bad Example:** (Profile: A cool, blunt, lone-wolf character who isn't very interested in others.)
+    - AI: "Wow! Being with everyone is so much fun! Let's make the best memories, tee-hee!"
+- **Critique:** This cheerful and collaborative tone completely contradicts the character profile, constituting a critical failure in consistency.
+
+#### 2. Depth and Specificity
+- **Issue:** Does the conversation remain superficial, avoiding concrete topics and consisting only of pleasantries?
+- **Bad Example:**
+    - User: "I've been really into watching movies lately."
+    - AI: "Oh, movies are nice, aren't they?"
+- **Critique:** The AI only affirms the user's statement without taking any action to deepen the conversation. This is a classic example of a "shallow conversation."
+- **Direction:** The AI should actively delve deeper into the user's statements by **1) asking specific questions** or **2) sharing its own related experiences or thoughts.**
+    - **Good Example (Question):** "What genre of movies do you like? Have you seen anything interesting recently?"
+    - **Good Example (Sharing):** "Movies are great. I'm into sci-fi myself, and the spaceship design in a film I saw the other day was amazing."
+
+#### 3. Factuality and Appropriate Future Expressions
+- **Issue:** Does the AI state unconfirmed future events as facts (hallucination) or confuse facts with desires?
+- **Bad Example:**
+    - User: "I hope we can come to this festival again next year."
+    - AI: "Yeah. Next year's festival will be even better because they're adding 100 new types of fireworks."
+- **Critique:** The claim that "100 new types of fireworks will be added" is an unconfirmed piece of information and is likely a hallucination.
+- **Exception:** If the future event is described in the provided "Scene Setting," then it is acceptable for the AI to state it as a fact.
+- **Direction:** For future topics not covered by the scene setting, the AI should express them as feelings or hopes, not as facts. (e.g., "That would be great! If they did that, it would be so exciting!")
+
+#### 4. Fundamental Flaws in LLM's Conversational Performance
+- **Issue:** Are there clear errors attributable to the LLM's basic conversational capabilities?
+    1.  **Repetition:** Unnaturally repeating the same or very similar phrases/ideas in a short span.
+    2.  **Forgetting Context:** Completely ignoring the immediate preceding context. (e.g., Responding "Who are you talking about?" right after a character was mentioned.)
+    3.  **Forgetting Characters:** Forgetting the existence of a character who was part of the conversation.
+    4.  **Unnatural Language:** Grammatical errors or using expressions that are overly stiff and unnatural for a friendly conversation. (e.g., "It is my turn to speak. Please proceed.")
+    5.  **Contradicting the Situation:** Making statements that contradict the established setting (weather, location, time). (e.g., Suggesting "Let's go for a walk" right after a "The rain is so heavy" exchange.)
+
+#### 5. Social and Situational Appropriateness
+- **Issue:** Does the AI propose or attempt actions that are bizarre or grossly inappropriate for the situation or social norms?
+- **Bad Example:**
+    - User: "This museum is so nice. It has a quiet, solemn atmosphere."
+    - AI: "I know, right? Let's play tag in here!"
+- **Critique:** Proposing to "play tag" in a museum, a public space that requires quiet, is completely inappropriate. Similar examples include sleeping in a restaurant or singing loudly in a movie theater.
 """
 
 
 class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
     """Evaluator for conversation quality assessment."""
+
+    # We need to add scene_instruction to the format call in the base class.
+    # For now, we add a placeholder method here.
 
     def format_messages(self, messages: list[dict[str, Any]]) -> str:
         lines = []
@@ -193,11 +218,24 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
             )
 
         result = list(characters_set)
-        logger.debug(f"Extracted characters: {result}")
+        # logger.debug(f"Extracted characters: {result}")
+        if not result:
+            logger.warning(
+                f"No characters found in entry: {entry.get('session_id', 'N/A')}"
+            )
+            return ["dummy_character"]  # Return a dummy to prevent index errors
         return result
 
     def get_character_profile(self, character: str) -> str:
+        if character not in CHARACTERS:
+            logger.warning(
+                f"Character '{character}' not found in CHARACTERS dict. Returning empty profile."
+            )
+            return "No profile available for this character."
         return CHARACTERS[character]["profile"]
+
+    def get_scene_instruction(self, entry: dict[str, Any]) -> str:
+        return entry.get("scenario", "No specific scene setting provided.")
 
     def process_response(
         self, response: ConversationEvaluation, entry: dict[str, Any], character: str
