@@ -612,12 +612,10 @@ def main():
 
         # 1バッチ（10件）分のプロンプトを生成
         for j in range(BATCH_SIZE):
-            # num_charas = random.randint(1, 2)
-            num_charas = 1
+            num_charas = random.randint(1, 2)
             num_users = 1
 
-            # charas = random.sample(list(CHARACTERS.keys()), num_charas)
-            charas = ["梵そよぎ"]
+            charas = random.sample(list(CHARACTERS.keys()), num_charas)
             users = random.sample(USERS, num_users)
 
             charas_info = [

@@ -258,9 +258,9 @@ class ConversationGenerator:
                     # vLLM path
                     fut = await self.batcher.put(prompt)
                     text = await fut
-                    text = (
-                        CHARACTERS.get(speaker, {}).get("tag", "") + text
-                    )  # Add tag if not present
+                    # text = (
+                    #     CHARACTERS.get(speaker, {}).get("tag", "") + text
+                    # )  # Add tag if not present
 
                     # Skip if generation failed (empty result)
                     if not text:

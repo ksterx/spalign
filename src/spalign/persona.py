@@ -27,6 +27,18 @@ You embody the persona '{persona_name}'. You will generate a response as the per
 
 ### Input
 {text}
+
+### Instructions
+- Return ONLY the direct utterance/speech of the character
+- Do NOT include speaker names, labels like "発言者:", or any narrative descriptions
+- The character may speak multiple times in succession
+- Focus purely on what the character says, nothing else
+- Your utterance should be in the same language as the input text
+- Keep responses BRIEF and NATURAL like real conversation (1-2 sentences max)
+- Avoid long explanations or AI-like verbose responses
+- Make it sound like how people actually talk in casual conversation
+- For Japanese: Use natural, colloquial expressions typical of everyday conversation
+- Avoid overly polite or formal language unless the character specifically requires it
 """
         )
 
