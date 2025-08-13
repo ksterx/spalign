@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from .models import PersonaResponse
 
@@ -13,9 +14,9 @@ from .models import PersonaResponse
 class PersonaGenerator:
     """Generate persona responses using OpenAI GPT models."""
 
-    def __init__(self, model: str = "gpt-4o", temperature: float = 0.2):
-        self.llm = ChatOpenAI(
-            model=model, temperature=temperature
+    def __init__(self, model: str = "gemini-2.5-flash", temperature: float = 0.3):
+        self.llm = ChatGoogleGenerativeAI(
+            model=model, temperature=temperature, api_key=os.getenv("GEMINI_API_KEY")
         ).with_structured_output(PersonaResponse)
         self.prompt = ChatPromptTemplate.from_template(
             template="""

@@ -139,7 +139,7 @@ class LLMFactory:
                 raise ValueError("GEMINI_API_KEY environment variable is required")
 
             return ChatGoogleGenerativeAI(
-                model="gemini-2.5-flash",
+                model="gemini-2.5-pro",
                 temperature=0.0,
                 api_key=api_key,
             ).with_structured_output(schema, include_raw=True)
