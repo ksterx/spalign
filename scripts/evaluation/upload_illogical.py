@@ -3,6 +3,7 @@ if __name__ == "__main__":
     import glob
     import json
     import os
+    import re
     from pathlib import Path
 
     from datasets import Dataset
@@ -14,6 +15,10 @@ if __name__ == "__main__":
     parser.add_argument("run_name", type=str)
     parser.add_argument("--use_first", action="store_true")
     args = parser.parse_args()
+
+    def remove_duplicate(text):
+        result = re.sub(r"^\[([^\]]+)\]\[\1\]", r"[\1]", text)
+        return result
 
     RUN_NAME = args.run_name
 
@@ -57,10 +62,10 @@ if __name__ == "__main__":
                 continue
 
             if m["next_speaker"]:
-                content = m["utterance"]
+                content = remove_duplicate(m["utterance"])
                 prev = m["utterance"]
             else:
-                content = m["utterance"] + "[next:user_00]"
+                content = remove_duplicate(m["utterance"]) + "[next:user_00]"
 
             if m["name"] != asst:
                 role = f"user_{role_mapping[m['name']]:02d}"
@@ -79,7 +84,7 @@ if __name__ == "__main__":
                 "scene": d["scene"],
                 "messages": msgs,
                 "chosen": d["chosen"],
-                "rejected": d["rejected"],
+                "rejected": remove_duplicate(d["rejected"]),
                 "metadata": {
                     "score": d["score"],
                     "reason": d["reason"],
