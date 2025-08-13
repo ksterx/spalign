@@ -104,3 +104,15 @@ if __name__ == "__main__":
         private=True,
     )
     logger.success("Finished uploading to hub")
+
+    new_ds_formatted = new_ds.map(
+        lambda x: {
+            "chosen": {"role": "assistant", "content": x["chosen"]},
+            "rejected": {"role": "assistant", "content": x["rejected"]},
+        }
+    )
+    new_ds_formatted.push_to_hub(
+        "Spiral-AI/HappyRat-Preference-formatted",
+        f"illogical-{RUN_NAME}",
+        private=True,
+    )
