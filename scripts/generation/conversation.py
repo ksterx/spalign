@@ -73,6 +73,18 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Retry only failed scenarios from previous runs",
     )
+    parser.add_argument(
+        "--scenario",
+        type=str,
+        default="Spiral-AI/Synthesized-Scenario-20250812",
+        help="Scenario repo to use",
+    )
+    parser.add_argument(
+        "--scenario_subset",
+        type=str,
+        default="default",
+        help="Scenario subset to use",
+    )
     return parser.parse_args()
 
 
@@ -118,9 +130,7 @@ async def main():
     init_db(db_file)
 
     # Load dataset
-    dataset = load_dataset(
-        "Spiral-AI/Synthesized-Scenario-20250513", split="train"
-    ).filter(
+    dataset = load_dataset(args.scenario, args.scenario_subset, split="train").filter(
         lambda x: set(x["character_list"])
         & set(CHARACTERS.keys() == set(x["character_list"]))
     )  # 使われていないキャラクターがあるので、ここでフィルタリング

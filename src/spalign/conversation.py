@@ -29,7 +29,7 @@ class ConversationGenerator:
     def __init__(
         self,
         model_name: str,
-        tensor_parallel_size: int = 2,
+        tensor_parallel_size: int = 8,
         max_num_seqs: int = 500,
         max_num_batched_tokens: int = 8192,
         max_model_len: int = 8192,

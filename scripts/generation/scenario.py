@@ -595,9 +595,9 @@ def main():
     ).to_list()
 
     # パラメータ設定
-    TOTAL_SCENARIOS = 1000
+    TOTAL_SCENARIOS = 100
     BATCH_SIZE = 10
-    OUTPUT_DIR = "scenarios"  # 出力先ディレクトリ
+    OUTPUT_DIR = "scenarios_soyogisoyogi"  # 出力先ディレクトリ
 
     # 出力ディレクトリの作成
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -612,10 +612,12 @@ def main():
 
         # 1バッチ（10件）分のプロンプトを生成
         for j in range(BATCH_SIZE):
-            num_charas = random.randint(1, 2)
+            # num_charas = random.randint(1, 2)
+            num_charas = 1
             num_users = 1
 
-            charas = random.sample(list(CHARACTERS.keys()), num_charas)
+            # charas = random.sample(list(CHARACTERS.keys()), num_charas)
+            charas = ["梵そよぎ"]
             users = random.sample(USERS, num_users)
 
             charas_info = [

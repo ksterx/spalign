@@ -12,3 +12,6 @@ wheels/
 *.json
 .envrc
 sft-data-checker/
+.DS_Store
+.vscode/
+*.pyc
