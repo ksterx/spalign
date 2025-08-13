@@ -10,7 +10,7 @@ from datasets import load_dataset
 from pydantic import BaseModel, Field
 
 from spalign.evaluation.base import BaseEvaluator, EvaluationConfig
-from spalign.projects.happyrat import CHARACTERS
+from spalign.projects.happyrat.happyrat import CHARACTERS
 from spalign.utils import extract_next_speaker
 
 
