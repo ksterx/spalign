@@ -220,7 +220,15 @@ class BaseEvaluator(Generic[T], ABC):
                 cost_total[0] += progress[2]
             return
 
-        messages_str = self.format_messages(entry["conversations"])
+        convs = []
+        prev = None
+        for c in entry["conversations"]:
+            if c["name"] + c["utterance"] == prev:
+                continue
+            prev = c["name"] + c["utterance"]
+            convs.append(c)
+
+        messages_str = self.format_messages(convs)
         characters = self.get_characters_from_entry(entry)
 
         local_bad, local_cost = 0, 0.0
