@@ -147,7 +147,7 @@ class ConversationGenerator:
                 if not new_msgs:
                     return "<s><|start_header_id|>assistant<|end_header_id|>\n\n"
                 prompt = self.tokenizer.apply_chat_template(
-                    msgs, tokenize=False, add_generation_prompt=True
+                    new_msgs, tokenize=False, add_generation_prompt=True
                 )
                 prompt += CHARACTERS.get("speaker", {}).get("tag", "")
                 return prompt
