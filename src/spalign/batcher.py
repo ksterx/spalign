@@ -81,7 +81,4 @@ class VLLMBatcher:
 
     def start(self):
         """Start the background batching task."""
-        print("VLLMBatcher: バックグラウンドタスクを開始中...")
-        task = asyncio.create_task(self._runner())
-        print(f"VLLMBatcher: タスク作成完了: {task}")
-        return task
+        asyncio.create_task(self._runner())

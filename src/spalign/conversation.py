@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from datasets import load_dataset
+from loguru import logger
 from transformers import AutoTokenizer
 from vllm import LLM
 
@@ -65,8 +66,31 @@ class ConversationGenerator:
         scenario_hash = get_scenario_hash(data)
 
         try:
+            # Validate input data structure
+            if not isinstance(data, dict):
+                raise ValueError(f"Data must be a dict, got {type(data)}")
+
+            if "scenario" not in data:
+                raise ValueError("Data missing required 'scenario' field")
+
+            if "character_list" not in data:
+                raise ValueError("Data missing required 'character_list' field")
+
             scenario = data["scenario"]
             characters = data["character_list"]
+
+            # Validate characters list
+            if not isinstance(characters, list):
+                raise ValueError(
+                    f"character_list must be a list, got {type(characters)}"
+                )
+
+            if len(characters) == 0:
+                raise ValueError("character_list cannot be empty")
+
+            logger.debug(
+                f"Starting conversation generation with {len(characters)} characters: {characters}"
+            )
 
             # Persona selection
             if persona_type == "original":
@@ -96,6 +120,13 @@ class ConversationGenerator:
             roles = parse_role(characters, p_name)
             idx_map = {v: k for k, v in roles.items()}
 
+            # Validate roles dictionary
+            if not roles:
+                raise ValueError("Failed to parse roles from characters")
+
+            logger.debug(f"Parsed roles: {roles}")
+            logger.debug(f"Index mapping: {idx_map}")
+
             histories: list[dict[str, Any]] = []
 
             def format_hist(msgs, speaker, scenario):
@@ -111,22 +142,84 @@ class ConversationGenerator:
                 return prompt
 
             for t in range(n_turns):
-                # Speaker selection
-                if t == 0:
-                    speaker = roles[0]
-                else:
-                    others = [n for n in roles.values() if n != p_name]
-                    if random.random() < p_prob:
-                        speaker = p_name
-                    else:
-                        if histories and histories[-1]["next_speaker"] == "myself":
-                            speaker = histories[-1]["name"]
-                        else:
-                            speaker = (
-                                random.choice(others)
-                                if random.random() < 0.9
-                                else histories[-1]["name"]
+                try:
+                    logger.debug(f"Turn {t}/{n_turns}: Starting speaker selection")
+
+                    # Speaker selection with bounds checking
+                    if t == 0:
+                        # Ensure roles[0] exists
+                        if 0 not in roles:
+                            raise ValueError(
+                                f"Role index 0 not found in roles: {roles}"
                             )
+                        speaker = roles[0]
+                        logger.debug(f"Turn {t}: Initial speaker selected: {speaker}")
+                    else:
+                        others = [n for n in roles.values() if n != p_name]
+                        logger.debug(f"Turn {t}: Available other speakers: {others}")
+
+                        if random.random() < p_prob:
+                            speaker = p_name
+                            logger.debug(
+                                f"Turn {t}: Persona speaker selected: {speaker}"
+                            )
+                        else:
+                            # Safe access to histories
+                            if len(histories) > 0:
+                                last_history = histories[-1]
+                                if (
+                                    isinstance(last_history, dict)
+                                    and "next_speaker" in last_history
+                                    and last_history["next_speaker"] == "myself"
+                                ):
+                                    if "name" in last_history:
+                                        speaker = last_history["name"]
+                                        logger.debug(
+                                            f"Turn {t}: 'myself' speaker selected: {speaker}"
+                                        )
+                                    else:
+                                        logger.warning(
+                                            f"Turn {t}: Last history missing 'name' field"
+                                        )
+                                        speaker = (
+                                            random.choice(others) if others else p_name
+                                        )
+                                else:
+                                    if others:
+                                        if random.random() < 0.9:
+                                            speaker = random.choice(others)
+                                        else:
+                                            if "name" in last_history:
+                                                speaker = last_history["name"]
+                                            else:
+                                                speaker = random.choice(others)
+                                        logger.debug(
+                                            f"Turn {t}: Random/repeat speaker selected: {speaker}"
+                                        )
+                                    else:
+                                        speaker = p_name
+                                        logger.warning(
+                                            f"Turn {t}: No other speakers available, using persona"
+                                        )
+                            else:
+                                # Fallback when histories is empty
+                                speaker = random.choice(others) if others else p_name
+                                logger.debug(
+                                    f"Turn {t}: Fallback speaker selected: {speaker}"
+                                )
+
+                    logger.debug(f"Turn {t}: Final speaker: {speaker}")
+
+                except Exception as e:
+                    logger.error(f"Turn {t}: Error in speaker selection: {e}")
+                    import traceback
+
+                    logger.error(
+                        f"Turn {t}: Speaker selection traceback: {traceback.format_exc()}"
+                    )
+                    # Fallback to first role or persona
+                    speaker = roles.get(0, p_name)
+                    logger.warning(f"Turn {t}: Using fallback speaker: {speaker}")
 
                 # Build prompt
                 hist_msgs = history_to_msgs(histories, speaker, idx_map)
@@ -171,19 +264,34 @@ class ConversationGenerator:
                     except Exception:
                         speaker_role = emo = nxt = None
 
-                # Record
-                histories.append(
-                    {
+                # Record with validation
+                try:
+                    history_entry = {
                         "index": t,
                         "name": speaker,
-                        "utterance": text,
+                        "utterance": text if text else "",
                         "emotion": emo,
                         "speaker": speaker_role,
                         "next_speaker": nxt,
                     }
-                )
+                    histories.append(history_entry)
+                    logger.debug(f"Turn {t}: Added history entry for {speaker}")
+                except Exception as e:
+                    logger.error(f"Turn {t}: Failed to record history: {e}")
+                    import traceback
 
-            # Pack result
+                    logger.error(
+                        f"Turn {t}: History recording traceback: {traceback.format_exc()}"
+                    )
+                    # Continue with next turn even if recording failed
+
+            # Pack result with validation
+            if not histories:
+                logger.warning("No conversation history generated")
+                raise ValueError("Failed to generate any conversation turns")
+
+            logger.info(f"Generated {len(histories)} conversation turns")
+
             result = data.copy()
             result.update(
                 {
@@ -199,9 +307,16 @@ class ConversationGenerator:
             # Save individual conversation file immediately
             self._save_individual_conversation(result, conversations_dir)
 
+            logger.info(
+                f"Successfully completed conversation generation with {len(histories)} turns"
+            )
             return result
 
         except Exception as e:
+            logger.error(f"Fatal error in conversation generation: {e}")
+            import traceback
+
+            logger.error(f"Conversation generation traceback: {traceback.format_exc()}")
             # Mark as failed in database
             mark_failed(scenario_hash, str(e), db_file)
             raise

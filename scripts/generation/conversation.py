@@ -127,17 +127,13 @@ async def main():
     )
 
     # Initialize database
-    print("データベースを初期化中...")
     init_db(db_file)
-    print("データベース初期化完了")
 
     # Load dataset
-    print(f"データセットをロード中: {args.scenario}, {args.scenario_subset}")
     dataset = load_dataset(args.scenario, args.scenario_subset, split="train").filter(
         lambda x: set(CHARACTERS.keys()) & set(x["character_list"])
         == set(x["character_list"])
     )  # 使われていないキャラクターがあるので、ここでフィルタリング
-    print(f"データセットロード完了: {len(dataset)} 件のシナリオ")
 
     if args.retry_failed:
         # Retry failed scenarios mode
@@ -159,14 +155,10 @@ async def main():
         target_scenarios = failed_scenarios
     else:
         # Normal mode: insert all scenarios as pending (if not already exists)
-        print("シナリオをデータベースに挿入中...")
         insert_pending_scenarios(dataset, db_file)
-        print("シナリオ挿入完了")
 
         # Get only pending scenarios
-        print("待機中のシナリオを取得中...")
         target_scenarios = get_pending_scenarios(dataset, db_file)
-        print("待機中のシナリオ取得完了")
 
     # Get progress statistics
     stats = get_progress_stats(db_file)
@@ -188,10 +180,7 @@ async def main():
     # Initialize conversation generator
     print("エンジンを初期化中...")
     generator = ConversationGenerator(args.model)
-    print("エンジン初期化完了")
-    print("バッチャーを起動中...")
     generator.start_batcher()
-    print("バッチャー起動完了")
 
     gpt_sem = asyncio.Semaphore(args.gpt_concurrency)
     semaphore = asyncio.Semaphore(args.max_concurrency)
