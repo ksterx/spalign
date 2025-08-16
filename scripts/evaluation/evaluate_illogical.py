@@ -197,7 +197,6 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
 
                     if c["name"] in CHARACTERS.keys():
                         characters_set.add(c["name"])
-                        logger.debug(f"Added character: {c['name']}")
 
                 except Exception as e:
                     logger.error(
@@ -271,9 +270,6 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
         self, corrections: list[dict[str, Any]], entry: dict[str, Any], session_id: str
     ) -> None:
         try:
-            logger.debug(
-                f"[{session_id}] Starting save_corrections with {len(corrections)} corrections"
-            )
             msgs: list[dict[str, Any]] = []
             conversations = entry.get("conversations", [])
 
@@ -281,13 +277,8 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
                 logger.error(f"[{session_id}] No conversations found in entry")
                 return
 
-            logger.debug(f"[{session_id}] Conversations length: {len(conversations)}")
-
             # Validate correction indices before processing
             for i, correction in enumerate(corrections):
-                logger.debug(
-                    f"[{session_id}] Processing correction {i}: index={correction.get('index')}"
-                )
                 if correction.get("index") is None:
                     logger.warning(f"[{session_id}] Correction {i} has None index")
                     continue
@@ -299,10 +290,6 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
 
             for i, m in enumerate(conversations):
                 try:
-                    logger.debug(
-                        f"[{session_id}] Processing conversation {i}/{len(conversations)}"
-                    )
-
                     # Validate conversation message structure
                     if not isinstance(m, dict):
                         logger.error(
@@ -331,10 +318,6 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
                             if correction.get("index") == i and correction[
                                 "index"
                             ] < len(conversations):
-                                logger.debug(
-                                    f"[{session_id}] Applying correction to message {i}"
-                                )
-
                                 # Check if character exists in CHARACTERS
                                 if m["name"] not in CHARACTERS:
                                     logger.error(
@@ -373,9 +356,6 @@ class QualityEvaluator(BaseEvaluator[ConversationEvaluation]):
                                             ensure_ascii=False,
                                             cls=self.DateTimeEncoder,
                                         )
-                                    logger.debug(
-                                        f"[{session_id}] Saved correction to {sample_path}"
-                                    )
                                 except Exception as e:
                                     logger.error(
                                         f"[{session_id}] Failed to save correction file {sample_path}: {e}"
@@ -523,6 +503,7 @@ def main() -> None:
         # Run evaluation
         try:
             evaluator.run_evaluation(
+                model=args.model,
                 dataset=dataset,
                 max_items=args.max_items,
                 max_workers=args.max_workers,

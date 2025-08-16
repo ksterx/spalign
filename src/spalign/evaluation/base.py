@@ -112,7 +112,7 @@ class ProgressTracker:
 
 class LLMConfig:
     """Configuration for LLM instances."""
-    
+
     def __init__(
         self,
         temperature: float = 0.0,
@@ -133,14 +133,14 @@ class LLMFactory:
 
     @staticmethod
     def create_llm(
-        schema: type[BaseModel], 
-        use_azure: bool = False, 
-        config: LLMConfig | None = None
+        schema: type[BaseModel],
+        use_azure: bool = False,
+        config: LLMConfig | None = None,
     ) -> Any:
         """Create LLM instance with structured output."""
         if config is None:
             config = LLMConfig()
-            
+
         if use_azure:
             api_key = os.getenv("AZURE_OPENAI_API_KEY")
             if not api_key:
@@ -220,17 +220,45 @@ class BaseEvaluator(Generic[T], ABC):
         """Extract character names from conversation entry."""
         pass
 
-    def calculate_cost(self, usage_metadata: dict[str, Any]) -> float:
+    def calculate_cost(self, model: str, usage_metadata: dict[str, Any]) -> float:
         """Calculate cost from usage metadata."""
         cache_tokens = usage_metadata.get("input_token_details", {}).get(
             "cache_read", 0
         )
         input_tokens = usage_metadata.get("input_tokens", 0) - cache_tokens
         output_tokens = usage_metadata.get("output_tokens", 0)
-        return ((input_tokens * 2 + output_tokens * 8 + cache_tokens * 0.5) / 1e6) * 150
+
+        COST_TABLE = {
+            "gpt-4.1": {
+                "input": 2,
+                "output": 8,
+                "cache": 0.5,
+            },
+            "gpt-5": {
+                "input": 1.25,
+                "output": 10,
+                "cache": 0.125,
+            },
+            "gemini-2.5-flash": {
+                "input": 1.25,
+                "output": 10,
+                "cache": 0.31,
+            },
+            "gemini-2.5-pro": {
+                "input": 0.3,
+                "output": 2.5,
+                "cache": 0.075,
+            },
+        }
+        return (
+            input_tokens * COST_TABLE[model]["input"]
+            + output_tokens * COST_TABLE[model]["output"]
+            + cache_tokens * COST_TABLE[model]["cache"]
+        ) / 1e6
 
     def process_entry(
         self,
+        model: str,
         entry: dict[str, Any],
         chain: Any,
         agg_lock: threading.Lock,
@@ -269,12 +297,11 @@ class BaseEvaluator(Generic[T], ABC):
                     "role_instruction": self.get_character_profile(character),
                     "scene_instruction": self.get_scene_instruction(entry),
                 }
-                logger.info(f"PROMPT: [{session_id}] {data}")
                 result = chain.invoke(data)
 
                 response = result["parsed"]
                 usage = result["raw"].usage_metadata or {}
-                local_cost += self.calculate_cost(usage)
+                local_cost += self.calculate_cost(model, usage)
 
                 bad_count, corrections = self.process_response(
                     response, entry, character
@@ -319,6 +346,7 @@ class BaseEvaluator(Generic[T], ABC):
 
     def run_evaluation(
         self,
+        model: str,
         dataset: Any,
         max_items: int | None = None,
         max_workers: int = 8,
@@ -335,11 +363,13 @@ class BaseEvaluator(Generic[T], ABC):
         num_bad_total = [0]
         cost_total = [0.0]
 
-        def process_entry_wrapper(entry: dict[str, Any]) -> None:
+        def process_entry_wrapper(model: str, entry: dict[str, Any]) -> None:
             """Wrapper to create per-thread LLM instance."""
-            llm = LLMFactory.create_llm(self.config.schema, use_azure, self.config.llm_config)
+            llm = LLMFactory.create_llm(
+                self.config.schema, use_azure, self.config.llm_config
+            )
             chain = prompt_tpl | llm
-            self.process_entry(entry, chain, agg_lock, num_bad_total, cost_total)
+            self.process_entry(model, entry, chain, agg_lock, num_bad_total, cost_total)
 
         # Get unprocessed entries
         entries_todo = self.progress_tracker.get_unprocessed_sessions(list(dataset))
@@ -350,7 +380,7 @@ class BaseEvaluator(Generic[T], ABC):
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for entry in entries_todo:
-                futures.append(executor.submit(process_entry_wrapper, entry))
+                futures.append(executor.submit(process_entry_wrapper, model, entry))
 
             logger.info(f"Processing {len(futures)} entries")
             for fut in tqdm(as_completed(futures), total=len(futures)):
