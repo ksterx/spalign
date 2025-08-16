@@ -4,7 +4,7 @@ if __name__ == "__main__":
     from datasets import load_dataset
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--date", type=str, default="250812")
+    parser.add_argument("--date", type=str, default="20250812")
     args = parser.parse_args()
 
     ds = load_dataset(
