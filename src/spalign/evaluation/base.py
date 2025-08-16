@@ -110,12 +110,37 @@ class ProgressTracker:
         return entries_todo
 
 
+class LLMConfig:
+    """Configuration for LLM instances."""
+    
+    def __init__(
+        self,
+        temperature: float = 0.0,
+        max_tokens: int | None = None,
+        max_retries: int = 2,
+        timeout: float | None = None,
+        model: str | None = None,
+    ):
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self.max_retries = max_retries
+        self.timeout = timeout
+        self.model = model
+
+
 class LLMFactory:
     """Factory for creating LLM instances."""
 
     @staticmethod
-    def create_llm(schema: type[BaseModel], use_azure: bool = False) -> Any:
+    def create_llm(
+        schema: type[BaseModel], 
+        use_azure: bool = False, 
+        config: LLMConfig | None = None
+    ) -> Any:
         """Create LLM instance with structured output."""
+        if config is None:
+            config = LLMConfig()
+            
         if use_azure:
             api_key = os.getenv("AZURE_OPENAI_API_KEY")
             if not api_key:
@@ -128,19 +153,20 @@ class LLMFactory:
                 azure_endpoint="https://experimental.openai.azure.com",
                 api_version="2025-01-01-preview",
                 api_key=SecretStr(secret_value=api_key),
-                temperature=0,
-                max_tokens=None,
-                timeout=None,
-                max_retries=2,
+                temperature=config.temperature,
+                max_tokens=config.max_tokens,
+                timeout=config.timeout,
+                max_retries=config.max_retries,
             ).with_structured_output(schema, include_raw=True)
         else:
             api_key = os.getenv("GEMINI_API_KEY")
             if not api_key:
                 raise ValueError("GEMINI_API_KEY environment variable is required")
 
+            model = config.model or "gemini-2.5-pro"
             return ChatGoogleGenerativeAI(
-                model="gemini-2.5-pro",
-                temperature=0.0,
+                model=model,
+                temperature=config.temperature,
                 api_key=api_key,
             ).with_structured_output(schema, include_raw=True)
 
@@ -154,11 +180,13 @@ class EvaluationConfig(Generic[T]):
         prompt_template: str,
         output_dir: str,
         table_suffix: str = "",
+        llm_config: LLMConfig | None = None,
     ):
         self.schema = schema
         self.prompt_template = prompt_template
         self.output_dir = output_dir
         self.table_suffix = table_suffix
+        self.llm_config = llm_config or LLMConfig()
 
 
 class BaseEvaluator(Generic[T], ABC):
@@ -309,7 +337,7 @@ class BaseEvaluator(Generic[T], ABC):
 
         def process_entry_wrapper(entry: dict[str, Any]) -> None:
             """Wrapper to create per-thread LLM instance."""
-            llm = LLMFactory.create_llm(self.config.schema, use_azure)
+            llm = LLMFactory.create_llm(self.config.schema, use_azure, self.config.llm_config)
             chain = prompt_tpl | llm
             self.process_entry(entry, chain, agg_lock, num_bad_total, cost_total)
 

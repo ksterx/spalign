@@ -10,7 +10,7 @@ from datasets import load_dataset
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from spalign.evaluation.base import BaseEvaluator, EvaluationConfig
+from spalign.evaluation.base import BaseEvaluator, EvaluationConfig, LLMConfig
 from spalign.projects.happyrat.happyrat import CHARACTERS
 from spalign.utils import extract_next_speaker
 
@@ -429,6 +429,26 @@ def main() -> None:
         parser.add_argument(
             "-v", "--verbose", action="store_true", help="Enable debug logging"
         )
+        parser.add_argument(
+            "--temperature", type=float, default=0.3, help="LLM temperature parameter"
+        )
+        parser.add_argument(
+            "--max-tokens", type=int, default=None, help="Maximum tokens for LLM output"
+        )
+        parser.add_argument(
+            "--max-retries", type=int, default=2, help="Maximum retries for LLM calls"
+        )
+        parser.add_argument(
+            "--model",
+            type=str,
+            default="gemini-2.5-pro",
+            help="Model name for LLM (e.g., gemini-2.5-pro)",
+        )
+        parser.add_argument(
+            "--use-azure",
+            action="store_true",
+            help="Use Azure OpenAI instead of Gemini",
+        )
         args = parser.parse_args()
 
         # Configure logging level
@@ -440,12 +460,21 @@ def main() -> None:
         logger.info(f"Max items: {args.max_items}, Max workers: {args.max_workers}")
         logger.info(f"Debug logging: {'enabled' if args.verbose else 'disabled'}")
 
+        # Setup LLM configuration
+        llm_config = LLMConfig(
+            temperature=args.temperature,
+            max_tokens=args.max_tokens,
+            max_retries=args.max_retries,
+            model=args.model,
+        )
+
         # Setup configuration
         config = EvaluationConfig(
             schema=ConversationEvaluation,
             prompt_template=QUALITY_PROMPT_TEMPLATE,
             output_dir="evaluation/illogical",
             table_suffix="_quality",
+            llm_config=llm_config,
         )
 
         # Create evaluator
@@ -497,6 +526,7 @@ def main() -> None:
                 dataset=dataset,
                 max_items=args.max_items,
                 max_workers=args.max_workers,
+                use_azure=args.use_azure,
             )
         except Exception as e:
             logger.error(f"Evaluation failed: {e}")
