@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import random
@@ -483,12 +484,29 @@ output_formats = [
     "まるでドキュメンタリー番組のナレーションのように、客観的な事実を淡々と描写するスタイルで",
     "詩的で、比喩や象徴を多用した文学的な散文形式で",
     "箇条書きを用いて、重要な要素（場所、時間、人物の配置、キーアイテムなど）を構造的に記述する形式で",
+    "箇条書きを用いて、重要な要素（場所、時間、人物の配置、キーアイテムなど）を構造的に記述する形式で",
+    "Markdown形式で",
+    "Markdown形式で",
+    "【】（場所などのセクション）とその要素の箇条書き（・から始まる）を用いた構造化された形式で",
+    "【】（場所などのセクション）とその要素の箇条書き（・から始まる）を用いた構造化された形式で",
+    "【】（時間などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "【】（時間などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "[]（キャラクターの配置などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "[]（キャラクターの配置などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "[]（場所や心情などのサブセクション）とその要素の箇条書き（・ から始まる）を用いた構造化された形式で",
+    "[]（場所や心情などのサブセクション）とその要素の箇条書き（・ から始まる）を用いた構造化された形式で",
+    "<>（展開などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "<>（展開などのサブセクション）とその要素の箇条書き（- から始まる）を用いた構造化された形式で",
+    "<>（キャラクターの配置などのサブセクション）とその要素の箇条書き（・ から始まる）を用いた構造化された形式で",
+    "<>（キャラクターの配置などのサブセクション）とその要素の箇条書き（・ から始まる）を用いた構造化された形式で",
+    "構造化された形式で",
+    "構造化された形式で",
     # --- 特定のメディアを模倣する形式 ---
-    "舞台演劇の戯曲のト書きのように",
-    "テーブルトークRPG(TRPG)のシナリオブックの導入部のように、ゲームマスター(GM)向けの説明として",
-    "古いフィルム・ノワール映画の冒頭ナレーションのような、ハードボイルドな文体で",
-    "ライトノベルのプロローグのように、読者の興味を引くキャッチーな書き出しで",
-    "まるで一枚の絵画を言葉で説明する（エクフラシス）かのように、視覚的な情報に特化して",
+    # "舞台演劇の戯曲のト書きのように",
+    # "テーブルトークRPG(TRPG)のシナリオブックの導入部のように、ゲームマスター(GM)向けの説明として",
+    # "古いフィルム・ノワール映画の冒頭ナレーションのような、ハードボイルドな文体で",
+    # "ライトノベルのプロローグのように、読者の興味を引くキャッチーな書き出しで",
+    # "まるで一枚の絵画を言葉で説明する（エクフラシス）かのように、視覚的な情報に特化して",
 ]
 
 # ■ 追加指示・焦点 (instructions)
@@ -583,6 +601,12 @@ def create_scenario_prompt(characters, user):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--num_scenarios", type=int, default=100)
+    parser.add_argument("-b", "--batch_size", type=int, default=10)
+    parser.add_argument("-o", "--output_dir", type=str, default="scenarios")
+    args = parser.parse_args()
+
     model = ChatGoogleGenerativeAI(
         model="gemini-2.5-pro",
         temperature=0.7,
@@ -595,23 +619,20 @@ def main():
     ).to_list()
 
     # パラメータ設定
-    TOTAL_SCENARIOS = 100
-    BATCH_SIZE = 10
-    OUTPUT_DIR = "scenarios_soyogisoyogi"  # 出力先ディレクトリ
 
     # 出力ディレクトリの作成
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(args.output_dir, exist_ok=True)
 
     # tqdmを使って進捗バーを表示
-    pbar = tqdm(total=TOTAL_SCENARIOS, desc="シナリオ生成中")
+    pbar = tqdm(total=args.num_scenarios, desc="シナリオ生成中")
 
     # 全体の件数をバッチサイズで区切ってループ
-    for i in range(0, TOTAL_SCENARIOS, BATCH_SIZE):
+    for i in range(0, args.num_scenarios, args.batch_size):
         batch_prompts = []
         batch_metadata = []  # 各プロンプトのメタデータを保存するリスト
 
         # 1バッチ（10件）分のプロンプトを生成
-        for j in range(BATCH_SIZE):
+        for j in range(args.batch_size):
             num_charas = random.randint(1, 2)
             num_users = 1
 
@@ -643,7 +664,9 @@ def main():
 
             # 結果を個別のファイルに保存
             for k, scenario_result in enumerate(results):
-                output_path = os.path.join(OUTPUT_DIR, f"scenario_{uuid.uuid4()}.json")
+                output_path = os.path.join(
+                    args.output_dir, f"scenario_{uuid.uuid4()}.json"
+                )
 
                 with open(output_path, "w", encoding="utf-8") as f:
                     data = scenario_result.model_dump()
@@ -657,19 +680,21 @@ def main():
 
         except Exception as e:
             print(
-                f"バッチ処理中にエラーが発生しました（{i}から{i + BATCH_SIZE - 1}番目）: {e}"
+                f"バッチ処理中にエラーが発生しました（{i}から{i + args.batch_size - 1}番目）: {e}"
             )
             print("5秒待機して次のバッチに進みます...")
             time.sleep(5)
             # エラーが発生したバッチの分も進捗バーを進める
-            pbar.update(BATCH_SIZE)
+            pbar.update(args.batch_size)
             continue  # エラーが起きても処理を続ける
 
             # 進捗バーを更新
-        pbar.update(BATCH_SIZE)
+        pbar.update(args.batch_size)
 
     pbar.close()
-    print(f"{TOTAL_SCENARIOS}件のシナリオ生成が完了しました。出力先: '{OUTPUT_DIR}'")
+    print(
+        f"{args.num_scenarios}件のシナリオ生成が完了しました。出力先: '{args.output_dir}'"
+    )
 
 
 if __name__ == "__main__":
