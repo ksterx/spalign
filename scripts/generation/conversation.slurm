@@ -17,4 +17,4 @@ uv run generate_conversation.py 250816 \
     -m /nas/c_arata/axolotl-output/models/24B-Kaji-HR-SFT-20250816 \
     -p metadata \
     --scenario Spiral-AI/Synthesized-Scenario-20250812 \
-    --scenario_subset default
+    --scenario_subset app 
