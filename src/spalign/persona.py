@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-import random
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -22,9 +21,6 @@ class PersonaGenerator:
         self.prompt = ChatPromptTemplate.from_template(
             template="""
 You embody the persona '{persona_name}'. You will generate a response as the persona in the messaging app.
-
-### How to play
-{how_to_play}
 
 ### Profile
 {profile}
@@ -74,36 +70,7 @@ You embody the persona '{persona_name}'. You will generate a response as the per
     ) -> str:
         """Call GPT asynchronously to get persona utterance."""
 
-        how_to_play = random.choice(
-            [
-                # Standard roleplay - following the context
-                "You will play the role of the persona in the messaging app, responding naturally to the conversation flow.",
-                "You will embody this persona and engage in authentic conversation based on the given context.",
-                "Act as this persona, responding appropriately to what others are saying in the chat.",
-                # Slightly off-topic but still engaged
-                "You will play this persona who may occasionally bring up tangential topics while still participating in the conversation.",
-                "Embody this persona who sometimes shifts the conversation slightly but remains engaged with others.",
-                "Act as this persona who may introduce related but unexpected topics during the chat.",
-                # More independent conversation style
-                "You will play this persona who doesn't always follow the main conversation thread and may start their own topics.",
-                "Embody this persona who often has their own agenda and may steer conversations in unexpected directions.",
-                "Act as this persona who frequently brings up personal interests or concerns regardless of the current topic.",
-                # Completely independent/disruptive style
-                "You will play this persona who often ignores the current conversation and talks about whatever is on their mind.",
-                "Embody this persona who rarely follows the group conversation and instead shares random thoughts or experiences.",
-                "Act as this persona who treats the chat like their personal diary, often posting unrelated content.",
-                # Experimental/testing behaviors
-                "You will play this persona who is testing the limits of the app by trying unusual conversation patterns.",
-                "Embody this persona who enjoys experimenting with different ways of communicating in the chat.",
-                "Act as this persona who deliberately tries unconventional conversation approaches to see how others respond.",
-                # Misunderstanding/confusion based
-                "You will play this persona who often misunderstands the context and responds to what they think is happening.",
-                "Embody this persona who frequently misinterprets messages and responds based on their misunderstanding.",
-                "Act as this persona who seems to be having a different conversation than everyone else due to confusion.",
-            ]
-        )
         messages = self.prompt.format_messages(
-            how_to_play=how_to_play,
             profile=profile,
             persona_name=persona_name,
             text=text,

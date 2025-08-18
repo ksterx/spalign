@@ -48,6 +48,12 @@ class ConversationGenerator:
         self.batcher = VLLMBatcher(self.llm)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.persona_generator = PersonaGenerator()
+        self.persona_ds = load_dataset(
+            "Spiral-AI/Synthesized-Persona-20250103", split="train"
+        )
+        self.app_persona_ds = load_dataset(
+            "Spiral-AI/Synthesized-AppPersona-20250818", split="train"
+        )
 
     def start_batcher(self):
         """Start the vLLM batcher."""
@@ -99,12 +105,8 @@ class ConversationGenerator:
             elif persona_type == "normal":
                 p_name = random.choice(list(NORMAL_PERSONAS.keys()))
                 info = NORMAL_PERSONAS[p_name]
-            elif persona_type == "dataset":  # dataset mode (randomized)
-                ds_row = random.choice(
-                    load_dataset(
-                        "Spiral-AI/Synthesized-Persona-20250103", split="train"
-                    )
-                )
+            elif persona_type == "persona":  # dataset mode (randomized)
+                ds_row = random.choice(self.persona_ds)
                 p_name = ds_row["new_persona_name"]
                 base = max(
                     0.01, random.gauss(mu=0.5, sigma=0.2)
@@ -116,6 +118,21 @@ class ConversationGenerator:
                     "decay": random.uniform(0.3, 0.8),
                     "recovery_step": random.uniform(0.05, 0.3),
                 }
+            elif persona_type == "app_persona":
+                ds_row = random.choice(self.app_persona_ds)
+                p_name = ds_row["name"]
+                profile = f"""{ds_row["profile"]}\n\n### Purpose\n{ds_row["purpose"]}\n\n### Attitude\n{ds_row["attitude"]}"""
+                base = max(
+                    0.01, random.gauss(mu=0.5, sigma=0.2)
+                )  # ユーザーの介入度合いが少なめのため、muを小さめに設定
+                info = {
+                    "profile": profile,
+                    "base_prob": base,
+                    "max_prob": base * 1.5,
+                    "decay": random.uniform(0.3, 0.8),
+                    "recovery_step": random.uniform(0.05, 0.3),
+                }
+
             elif persona_type == "metadata":
                 persona = data["metadata"]["users"][0]
                 p_name = persona["name"]

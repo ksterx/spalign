@@ -605,6 +605,16 @@ def main():
     parser.add_argument("-n", "--num_scenarios", type=int, default=100)
     parser.add_argument("-b", "--batch_size", type=int, default=10)
     parser.add_argument("-o", "--output_dir", type=str, default="scenarios")
+    parser.add_argument(
+        "-p",
+        "--persona_source",
+        type=str,
+        choices=[
+            "Spiral-AI/Synthesized-Persona-20250103",
+            "Spiral-AI/Synthesized-AppPersona-20250818",
+        ],
+        required=True,
+    )
     args = parser.parse_args()
 
     model = ChatGoogleGenerativeAI(
@@ -614,9 +624,7 @@ def main():
         api_key=os.getenv("GEMINI_API_KEY"),
     ).with_structured_output(Scenario)
 
-    USERS = load_dataset(
-        "Spiral-AI/Synthesized-Persona-20250103", split="train"
-    ).to_list()
+    USERS = load_dataset(args.persona_source, split="train").to_list()
 
     # パラメータ設定
 
@@ -642,10 +650,20 @@ def main():
             charas_info = [
                 {"name": c, "profile": CHARACTERS[c]["profile"]} for c in charas
             ]
-            users_info = {
-                "name": users[0]["new_persona_name"],
-                "profile": users[0]["new_persona"],
-            }
+            if args.persona_source == "Spiral-AI/Synthesized-AppPersona-20250818":
+                users_info = {
+                    "name": users[0]["name"],
+                    "profile": users[0]["profile"]
+                    + "\n\n### Purpose\n"
+                    + users[0]["purpose"]
+                    + "\n\n### Attitude\n"
+                    + users[0]["attitude"],
+                }
+            elif args.persona_souce == "Spiral-AI/Synthesized-Persona-20250103":
+                users_info = {
+                    "name": users[0]["new_persona_name"],
+                    "profile": users[0]["new_persona"],
+                }
 
             scenario_prompt = create_scenario_prompt(charas_info, users_info)
 
