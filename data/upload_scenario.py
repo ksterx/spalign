@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--subset", type=str, default="default")
-    parser.add_argument("--dir", type=str, default="scenarios")
+    parser.add_argument("--dir", type=str, default="data/scenarios")
     args = parser.parse_args()
 
     ds = load_dataset(

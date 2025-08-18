@@ -1,3 +1,9 @@
+"""
+How to run:
+
+uv run scripts/generation/generate_scenario.py -n 1000 -b 10 -p Spiral-AI/Synthesized-AppPersona-20250818 -o data/scenarios_app
+"""
+
 import argparse
 import json
 import os
