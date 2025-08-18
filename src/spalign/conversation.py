@@ -173,7 +173,7 @@ class ConversationGenerator:
                         others = [n for n in roles.values() if n != p_name]
                         logger.debug(f"Turn {t}: Available other speakers: {others}")
 
-                        if random.random() < p_prob * (
+                        if random.random() < p_prob / (
                             len(characters) + 1
                         ):  # キャラクター数に応じて確率を調整。
                             speaker = p_name
