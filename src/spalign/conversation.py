@@ -106,24 +106,28 @@ class ConversationGenerator:
                     )
                 )
                 p_name = ds_row["new_persona_name"]
-                base = random.uniform(0.01, 0.12)
+                base = max(
+                    0.01, random.gauss(mu=0.5, sigma=0.2)
+                )  # ユーザーの介入度合いが少なめのため、muを小さめに設定
                 info = {
                     "profile": ds_row["new_persona"],
                     "base_prob": base,
-                    "max_prob": random.uniform(base, 0.3),
-                    "decay": random.uniform(0.2, 0.6),
-                    "recovery_step": random.uniform(0.01, 0.05),
+                    "max_prob": base * 1.5,
+                    "decay": random.uniform(0.3, 0.8),
+                    "recovery_step": random.uniform(0.05, 0.3),
                 }
             elif persona_type == "metadata":
                 persona = data["metadata"]["users"][0]
                 p_name = persona["name"]
-                base = random.uniform(0.01, 0.12)
+                base = max(
+                    0.01, random.gauss(mu=0.5, sigma=0.2)
+                )  # ユーザーの介入度合いが少なめのため、muを小さめに設定
                 info = {
                     "profile": persona["profile"],
                     "base_prob": base,
-                    "max_prob": random.uniform(base, 0.3),
-                    "decay": random.uniform(0.2, 0.6),
-                    "recovery_step": random.uniform(0.01, 0.05),
+                    "max_prob": base * 1.5,
+                    "decay": random.uniform(0.3, 0.8),
+                    "recovery_step": random.uniform(0.05, 0.3),
                 }
             params = PersonaParams.model_validate(info)
             p_prob = params.base_prob
@@ -169,7 +173,9 @@ class ConversationGenerator:
                         others = [n for n in roles.values() if n != p_name]
                         logger.debug(f"Turn {t}: Available other speakers: {others}")
 
-                        if random.random() < p_prob:
+                        if random.random() < p_prob * (
+                            len(characters) + 1
+                        ):  # キャラクター数に応じて確率を調整。
                             speaker = p_name
                             logger.debug(
                                 f"Turn {t}: Persona speaker selected: {speaker}"
