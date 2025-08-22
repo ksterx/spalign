@@ -5,7 +5,7 @@ from datasets import load_dataset
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("run_name", type=str, required=True)
+    parser.add_argument("run_name", type=str)
     args = parser.parse_args()
 
     ds = load_dataset(
