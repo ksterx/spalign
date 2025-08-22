@@ -609,7 +609,7 @@ def create_scenario_prompt(characters, user):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--num_scenarios", type=int, default=100)
-    parser.add_argument("-b", "--batch_size", type=int, default=10)
+    parser.add_argument("-b", "--batch_size", type=int, default=12)
     parser.add_argument("-o", "--output_dir", type=str, default="scenarios")
     parser.add_argument(
         "-p",
