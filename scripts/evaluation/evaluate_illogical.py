@@ -11,7 +11,7 @@ from loguru import logger
 from pydantic import BaseModel, Field
 
 from spalign.evaluation.base import BaseEvaluator, EvaluationConfig, LLMConfig
-from spalign.projects.happyrat.happyrat import CHARACTERS
+from spalign.projects.happyrat.profiles import CHARACTERS
 from spalign.utils import extract_next_speaker
 
 

@@ -27,7 +27,7 @@ from spalign.database import (
     insert_pending_scenarios,
     reset_failed_to_pending,
 )
-from spalign.projects.happyrat.happyrat import CHARACTERS
+from spalign.projects.happyrat.profiles import CHARACTERS
 
 
 def parse_arguments() -> argparse.Namespace:

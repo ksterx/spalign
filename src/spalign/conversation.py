@@ -14,7 +14,7 @@ from transformers import AutoTokenizer
 from vllm import LLM
 
 from spalign.personas import NORMAL_PERSONAS, PERSONAS
-from spalign.projects.happyrat.happyrat import CHARACTERS
+from spalign.projects.happyrat.profiles import CHARACTERS
 from spalign.utils import parse_utterance
 
 from .batcher import VLLMBatcher
