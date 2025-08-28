@@ -13,6 +13,7 @@ conda deactivate
 
 export RESULTS_DIR=/nas/k_ishikawa/datasets/HappyRat/synthesis
 export HF_HUB_ENABLE_HF_TRANSFER=0
+export GEMINI_API_KEY=${GEMINI_API_KEY}
 
 uv run generate_conversation.py 250828-multilingual \
     -m /nas/c_arata/axolotl-output/models/24B-HR-SFT-Multilingual-20250826 \
