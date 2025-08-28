@@ -621,6 +621,7 @@ def main():
         ],
         required=True,
     )
+    parser.add_argument("-l", "--language", type=str, required=True)
     args = parser.parse_args()
 
     model = ChatGoogleGenerativeAI(
@@ -631,6 +632,7 @@ def main():
     ).with_structured_output(Scenario)
 
     USERS = load_dataset(args.persona_source, split="train").to_list()
+    CHARAS = [c for c in CHARACTERS if c["language"] == args.language]
 
     # パラメータ設定
 
@@ -650,12 +652,10 @@ def main():
             num_charas = random.randint(1, 2)
             num_users = 1
 
-            charas = random.sample(list(CHARACTERS.keys()), num_charas)
+            charas = random.sample(list(CHARAS), num_charas)
             users = random.sample(USERS, num_users)
 
-            charas_info = [
-                {"name": c, "profile": CHARACTERS[c]["profile"]} for c in charas
-            ]
+            charas_info = [{"name": c, "profile": CHARAS[c]["profile"]} for c in charas]
             if args.persona_source == "Spiral-AI/Synthesized-AppPersona-20250818":
                 users_info = {
                     "name": users[0]["name"],
