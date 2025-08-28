@@ -7,6 +7,7 @@ for data in dataset:
     chara_info[data["assistant_name"].title()] = {
         "token": data["character_token"],
         "profile": data["profile"],
+        "language": data["language"],
     }
 print(chara_info)
 
