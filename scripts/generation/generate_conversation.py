@@ -41,6 +41,7 @@ def parse_arguments() -> argparse.Namespace:
         default=os.environ.get("MODEL_NAME", ""),
         help="Model name",
     )
+    parser.add_argument("-l", "--language", type=str, required=True)
     parser.add_argument(
         "-p",
         "--persona_type",
@@ -179,7 +180,7 @@ async def main():
 
     # Initialize conversation generator
     print("エンジンを初期化中...")
-    generator = ConversationGenerator(args.model)
+    generator = ConversationGenerator(args.model, args.language)
     generator.start_batcher()
 
     gpt_sem = asyncio.Semaphore(args.gpt_concurrency)

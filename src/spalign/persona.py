@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from typing import Literal
 
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -14,7 +15,12 @@ from .models import PersonaResponse
 class PersonaGenerator:
     """Generate persona responses using OpenAI GPT models."""
 
-    def __init__(self, model: str = "gemini-2.5-flash", temperature: float = 0.3):
+    def __init__(
+        self,
+        language: Literal["Japanese", "English"],
+        model: str = "gemini-2.5-flash",
+        temperature: float = 0.3,
+    ):
         self.llm = ChatGoogleGenerativeAI(
             model=model, temperature=temperature, api_key=os.getenv("GEMINI_API_KEY")
         ).with_structured_output(PersonaResponse)
@@ -36,6 +42,7 @@ You embody the persona '{persona_name}'. You will generate a response as the per
 - The character may speak multiple times in succession
 - Focus purely on what the character says, nothing else
 - Your utterance should be in the same language as the input text
+- Your response must be in {language}
 
 **Conversation Approach:**
 - You may follow the conversation context, ignore it, or redirect it based on your persona
@@ -58,7 +65,8 @@ You embody the persona '{persona_name}'. You will generate a response as the per
 - Real users don't always respond appropriately or stay on topic
 - It's okay to be confusing, off-topic, or seemingly random if that's who you are
 - Your goal is to behave like a real person with quirks, not a perfect conversationalist
-"""
+""",
+            partial_variables={"language": language},
         )
 
     async def generate(

@@ -6,7 +6,7 @@ import asyncio
 import random
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from datasets import load_dataset
 from loguru import logger
@@ -30,6 +30,7 @@ class ConversationGenerator:
     def __init__(
         self,
         model_name: str,
+        language: Literal["Japanese", "English"],
         tensor_parallel_size: int = 8,
         max_num_seqs: int = 500,
         max_num_batched_tokens: int = 8192,
@@ -47,7 +48,7 @@ class ConversationGenerator:
         )
         self.batcher = VLLMBatcher(self.llm)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.persona_generator = PersonaGenerator()
+        self.persona_generator = PersonaGenerator(language)
         self.persona_ds = load_dataset(
             "Spiral-AI/Synthesized-Persona-20250103", split="train"
         )
