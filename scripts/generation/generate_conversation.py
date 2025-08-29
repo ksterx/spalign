@@ -41,7 +41,12 @@ def parse_arguments() -> argparse.Namespace:
         default=os.environ.get("MODEL_NAME", ""),
         help="Model name",
     )
-    parser.add_argument("-l", "--language", type=str, required=True)
+    parser.add_argument(
+        "-l",
+        "--language",
+        type=str,
+        required=True,
+    )
     parser.add_argument(
         "-p",
         "--persona_type",

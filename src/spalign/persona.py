@@ -42,7 +42,8 @@ You embody the persona '{persona_name}'. You will generate a response as the per
 - The character may speak multiple times in succession
 - Focus purely on what the character says, nothing else
 - Your utterance should be in the same language as the input text
-- Your response must be in {language}
+- **Your utterance must be in {language}**
+- If any character profile or description is written in a language other than {language}, reinterpret it in {language} before using it.
 
 **Conversation Approach:**
 - You may follow the conversation context, ignore it, or redirect it based on your persona
