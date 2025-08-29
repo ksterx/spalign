@@ -537,7 +537,7 @@ instructions = [
 # --- 3. プロンプト生成関数のブラッシュアップ ---
 
 
-def create_scenario_prompt(characters, user):
+def create_scenario_prompt(characters, user, language):
     """
     拡充された要素と深掘りされた関係性を使い、LLMへの指示を強化したプロンプトを生成する。
     """
@@ -602,6 +602,7 @@ def create_scenario_prompt(characters, user):
 - **出力形式に関する追加指示:**
   - シナリオ全体のスタイルは「{selected_output_format}」で記述してください。
   - 特に「{selected_instruction}」を意識して執筆してください。
+- **出力は必ず{language}で行ってください。**
 """
     return prompt
 
@@ -632,7 +633,10 @@ def main():
     ).with_structured_output(Scenario)
 
     USERS = load_dataset(args.persona_source, split="train").to_list()
-    CHARAS = [c for c in CHARACTERS if c["language"] == args.language]
+    CHARAS = {}
+    for name, c in CHARACTERS.items():
+        if c["language"] == args.language:
+            CHARAS[name.title()] = c
 
     # パラメータ設定
 
@@ -665,13 +669,19 @@ def main():
                     + "\n\n### Attitude\n"
                     + users[0]["attitude"],
                 }
-            elif args.persona_souce == "Spiral-AI/Synthesized-Persona-20250103":
+            elif args.persona_source == "Spiral-AI/Synthesized-Persona-20250103":
                 users_info = {
                     "name": users[0]["new_persona_name"],
                     "profile": users[0]["new_persona"],
                 }
 
-            scenario_prompt = create_scenario_prompt(charas_info, users_info)
+            if args.language == "eng":
+                language = "English"
+            elif args.language == "jp":
+                language = "日本語"
+            else:
+                raise ValueError(f"Invalid language: {args.language}")
+            scenario_prompt = create_scenario_prompt(charas_info, users_info, language)
 
             batch_prompts.append(scenario_prompt)
             batch_metadata.append(

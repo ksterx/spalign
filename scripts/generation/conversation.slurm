@@ -19,4 +19,4 @@ uv run generate_conversation.py 250828-multilingual \
     -m /nas/c_arata/axolotl-output/models/24B-HR-SFT-Multilingual-20250826 \
     -p metadata \
     --scenario Spiral-AI/Synthesized-Scenario-20250812 \
-    --scenario_subset app
+    --scenario_subset english
